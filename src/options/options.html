@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>WebChat - 设置</title>
+    <link rel="stylesheet" href="options.css">
+</head>
+<body>
+    <div class="container">
+        <h1>设置</h1>
+
+        <div class="settings-section">
+            <h2>常规设置</h2>
+            <div class="setting-item">
+                <label class="setting-label">
+                    <input type="checkbox" id="autoHideDialog" checked>
+                    点击对话框外部时自动隐藏对话框
+                </label>
+            </div>
+            <div class="setting-item">
+                <label for="displayMode">显示模式</label>
+                <select id="displayMode">
+                    <option value="floating">悬浮窗（可拖动 / 默认）</option>
+                    <option value="sidebar-right">侧边栏（停靠右侧）</option>
+                    <option value="sidebar-left">侧边栏（停靠左侧）</option>
+                </select>
+                <div class="help-text">侧边栏模式下对话框会贴边、占满高度，并自动让出页面空间。</div>
+            </div>
+            <div id="sidebarSettings" class="sub-settings">
+                <div class="setting-item">
+                    <label for="sidebarWidth">侧边栏宽度（像素）</label>
+                    <input type="number" id="sidebarWidth" min="280" max="720" step="20" value="380">
+                </div>
+            </div>
+            <div class="setting-item">
+                <label class="setting-label">
+                    <input type="checkbox" id="enableContext" checked>
+                    启用上下文聊天（包含历史对话记录）
+                </label>
+            </div>
+            <div id="contextSettings" class="sub-settings">
+                <div class="setting-item">
+                    <label for="maxContextRounds">保留最近对话轮数</label>
+                    <input type="number" id="maxContextRounds" min="1" max="10" value="3">
+                    <div class="help-text">设置保留最近几轮对话作为上下文（1-10轮）</div>
+                </div>
+            </div>
+            <div class="setting-item">
+                <label for="systemPrompt">系统提示词</label>
+                <textarea id="systemPrompt" rows="3" placeholder="你是一个帮助理解网页内容的AI助手。请使用Markdown格式回复。"></textarea>
+                <div class="help-text">设置AI助手的角色和行为。留空则使用默认提示词。</div>
+            </div>
+
+            <div class="setting-item">
+                <label class="setting-label">
+                    <input type="checkbox" id="enableImageRecognition">
+                    启用页面图片识别（需视觉模型）
+                </label>
+                <div class="help-text">勾选后，发送时会附带页面中可见图片，配合支持视觉的模型一起分析。</div>
+            </div>
+            <div id="imageSettings" class="sub-settings">
+                <div class="setting-item">
+                    <label class="setting-label">
+                        <input type="checkbox" id="autoCollectPageImages">
+                        未手动标记图片时，自动抓取页面可见图片
+                    </label>
+                    <div class="help-text">关闭后只发送你通过右键菜单或区域截图标记的图片。</div>
+                </div>
+                <div class="setting-item">
+                    <label for="maxImagesPerPage">自动抓取时最多附带图片数</label>
+                    <input type="number" id="maxImagesPerPage" min="1" max="8" value="3">
+                </div>
+                <div class="setting-item">
+                    <label class="setting-label">
+                        <input type="checkbox" id="modelSupportsVision">
+                        当前模型支持视觉
+                    </label>
+                    <div class="help-text">未勾选时会自动调用下面配置的视觉副模型把图转成文字描述。</div>
+                </div>
+                <div class="setting-item">
+                    <label for="visionFallbackProvider">视觉副模型（fallback）</label>
+                    <select id="visionFallbackProvider">
+                        <option value="">自动（按 OpenAI / Claude / Gemini / Ollama 顺序选第一个可用的）</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="claude">Claude</option>
+                        <option value="gemini">Gemini</option>
+                        <option value="ollama">本地模型 (Ollama)</option>
+                    </select>
+                    <div class="help-text">主模型不支持视觉时，用这个副模型把图片描述成文字再回答。需要在"模型配置"里先填好它的 API Key。</div>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <label for="referencedTabMaxChars">引用 tab 内容最大字符数</label>
+                <input type="number" id="referencedTabMaxChars" min="500" max="20000" step="500" value="4000">
+                <div class="help-text">通过 @ 引用其它 tab 时，单个 tab 内容超过该字符数会被压缩或截断。</div>
+            </div>
+            <div class="setting-item">
+                <label for="referencedTabCompressMode">超长引用处理方式</label>
+                <select id="referencedTabCompressMode">
+                    <option value="truncate">截断（保留开头）</option>
+                    <option value="ai">AI 摘要（消耗额外请求）</option>
+                    <option value="hybrid">混合（先截断再 AI 摘要）</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h2>模型配置</h2>
+
+            <div class="provider-tabs" id="providerTabs">
+                <button class="provider-tab active" data-provider="openai">OpenAI</button>
+                <button class="provider-tab" data-provider="deepseek">DeepSeek</button>
+                <button class="provider-tab" data-provider="claude">Claude</button>
+                <button class="provider-tab" data-provider="gemini">Gemini</button>
+                <button class="provider-tab" data-provider="ollama">Ollama</button>
+                <button class="provider-tab" data-provider="custom">自定义</button>
+            </div>
+
+            <div id="providerConfig" class="provider-config">
+                <div class="form-group api-key-group">
+                    <label for="apiKey">API 密钥: <span class="required-mark">*</span></label>
+                    <div class="input-wrapper">
+                        <input type="password" id="apiKey" placeholder="" class="secure-input" autocomplete="off" spellcheck="false">
+                        <button type="button" id="toggleApiKey" class="toggle-visibility" title="点击显示">
+                            <span class="eye-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="apiBase">请求 URL: <span class="required-mark">*</span></label>
+                    <input type="text" id="apiBase" placeholder="">
+                    <small class="help-text" id="apiBaseHelp">API 接口地址</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="model">模型:</label>
+                    <div class="model-input-wrapper">
+                        <select id="modelSelect" class="model-select">
+                            <option value="">手动输入...</option>
+                        </select>
+                        <input type="text" id="modelInput" placeholder="">
+                    </div>
+                    <small class="help-text" id="modelHelp">模型名称</small>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>最大回复长度:</label>
+                <div class="range-with-input">
+                    <input type="range" id="maxTokensRange" min="128" max="4096" value="2048" step="1">
+                    <input type="number" id="maxTokensInput" min="128" max="4096" value="2048">
+                </div>
+                <small class="help-text">128 ~ 4096 tokens</small>
+            </div>
+
+            <div class="form-group">
+                <label>温度 (创造性):</label>
+                <div class="range-with-input">
+                    <input type="range" id="temperatureRange" min="0" max="1" value="0.7" step="0.1">
+                    <input type="number" id="temperatureInput" min="0" max="1" value="0.7" step="0.1">
+                </div>
+                <small class="help-text">0.0 ~ 1.0（值越大回答越有创造性）</small>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button id="reset" class="secondary-button">还原默认设置</button>
+            <button id="save">保存并测试</button>
+        </div>
+
+        <div id="status" class="status"></div>
+    </div>
+    <script src="options.js"></script>
+</body>
+</html>

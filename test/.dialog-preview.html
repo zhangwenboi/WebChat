@@ -1,0 +1,1177 @@
+<!doctype html><meta charset="utf-8"><style>#ai-assistant-ball {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #007AFF;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 2147483646;
+    font-size: 24px;
+    color: white;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    user-select: none;
+    pointer-events: auto;
+}
+
+#ai-assistant-ball:hover {
+    transform: scale(1.1);
+    background-color: #0056b3;
+}
+
+#ai-assistant-dialog {
+    position: fixed;
+    right: 20px;
+    bottom: 80px;
+    width: min(400px, 90vw);
+    height: min(500px, 80vh);
+    min-width: 280px;
+    min-height: 300px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 2147483645;
+    overflow: hidden;
+    transform-origin: bottom right;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transform: scale(0.3);
+    pointer-events: none;
+    visibility: hidden;
+}
+
+#ai-assistant-dialog.show {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+    visibility: visible;
+}
+
+/* ===== 侧边栏模式 ===== */
+/* 通过 data-mode 切换形态：floating（默认）/ sidebar-left / sidebar-right */
+#ai-assistant-dialog[data-mode="sidebar-left"],
+#ai-assistant-dialog[data-mode="sidebar-right"] {
+    top: 0 !important;
+    bottom: 0 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    transform-origin: center !important;
+    transform: translateX(0) !important;
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.18);
+}
+#ai-assistant-dialog[data-mode="sidebar-left"] {
+    left: 0 !important;
+    right: auto !important;
+    transform: translateX(-100%);
+}
+#ai-assistant-dialog[data-mode="sidebar-right"] {
+    right: 0 !important;
+    left: auto !important;
+    transform: translateX(100%);
+}
+#ai-assistant-dialog[data-mode="sidebar-left"].show,
+#ai-assistant-dialog[data-mode="sidebar-right"].show {
+    transform: translateX(0) !important;
+}
+/* 侧边栏模式下隐藏右下缩放手柄；header 仍显示但不再用作拖动 */
+#ai-assistant-dialog[data-mode="sidebar-left"] .resize-handle,
+#ai-assistant-dialog[data-mode="sidebar-right"] .resize-handle {
+    display: none !important;
+}
+#ai-assistant-dialog[data-mode="sidebar-left"] .header,
+#ai-assistant-dialog[data-mode="sidebar-right"] .header {
+    cursor: default;
+}
+/* 让出页面空间，避免侧边栏遮挡内容 */
+body.webchat-sidebar-left {
+    margin-left: var(--webchat-sidebar-w, 380px) !important;
+}
+body.webchat-sidebar-right {
+    margin-right: var(--webchat-sidebar-w, 380px) !important;
+}
+
+/* 复制原有的popup.css中的样式，但修改选择器 */
+#ai-assistant-dialog .container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background-color: #f5f5f5;
+    position: relative;
+    z-index: 1;
+}
+
+#ai-assistant-dialog .header {
+    padding: 8px 16px;
+    border-bottom: 1px solid #eee;
+    background-color: #fff;
+    min-height: 0px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+#ai-assistant-dialog .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+#ai-assistant-dialog .header-btn {
+    width: 26px;
+    height: 26px;
+    line-height: 1;
+    border: 1px solid transparent;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #555;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+#ai-assistant-dialog .header-btn:hover {
+    background: #f0f0f0;
+    color: #007AFF;
+    border-color: #e5e7eb;
+}
+
+#ai-assistant-dialog .header-btn svg,
+#ai-assistant-dialog .toolbar-btn svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+#ai-assistant-dialog .chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    background-color: #fff;
+    min-height: 0;
+    position: relative;
+    z-index: 1;
+}
+
+/* 添加所有popup.css中的样式，加上#ai-assistant-dialog前缀 */
+#ai-assistant-dialog .welcome-message {
+    text-align: center;
+    color: #666;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+#ai-assistant-dialog .messages {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+#ai-assistant-dialog .message {
+    max-width: min(85%, calc(100% - 40px));
+    padding: 10px 14px;
+    border-radius: 12px;
+    word-wrap: break-word;
+    position: relative;
+}
+
+#ai-assistant-dialog .user-message {
+    align-self: flex-end !important;
+    background-color: #007AFF !important;
+    color: white !important;
+    border-radius: 12px 12px 2px 12px !important;
+    max-width: 85% !important;
+}
+
+#ai-assistant-dialog .assistant-message {
+    align-self: flex-start;
+    background-color: #f0f0f0;
+    color: #000;
+    border-radius: 12px 12px 12px 2px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Markdown 样式 */
+#ai-assistant-dialog .assistant-message p {
+    margin: 0.5em 0;
+}
+
+#ai-assistant-dialog .assistant-message code {
+    background-color: #f3f3f3;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+#ai-assistant-dialog .assistant-message pre {
+    background-color: #f6f8fa;
+    padding: 12px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 0.5em 0;
+}
+
+#ai-assistant-dialog .assistant-message pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+#ai-assistant-dialog .assistant-message ul,
+#ai-assistant-dialog .assistant-message ol {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+}
+
+#ai-assistant-dialog .assistant-message blockquote {
+    border-left: 4px solid #ddd;
+    margin: 0.5em 0;
+    padding-left: 1em;
+    color: #666;
+}
+
+#ai-assistant-dialog .assistant-message a {
+    color: #0366d6;
+    text-decoration: none;
+}
+
+#ai-assistant-dialog .assistant-message a:hover {
+    text-decoration: underline;
+}
+
+#ai-assistant-dialog .assistant-message table {
+    border-collapse: collapse;
+    margin: 0.5em 0;
+    width: 100%;
+}
+
+#ai-assistant-dialog .assistant-message th,
+#ai-assistant-dialog .assistant-message td {
+    border: 1px solid #ddd;
+    padding: 6px 8px;
+}
+
+#ai-assistant-dialog .assistant-message th {
+    background-color: #f6f8fa;
+}
+
+#ai-assistant-dialog .typing-indicator {
+    display: inline-block;
+    padding: 4px 8px;
+}
+
+#ai-assistant-dialog .typing-indicator span {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #90909090;
+    border-radius: 50%;
+    margin: 0 2px;
+    animation: typing 1s infinite ease-in-out;
+}
+
+#ai-assistant-dialog .typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+#ai-assistant-dialog .typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
+#ai-assistant-dialog .input-container {
+    position: relative !important;
+    display: flex !important;
+    gap: 8px !important;
+    padding: 12px !important;
+    background-color: white !important;
+    border-top: 1px solid #F3F4F6 !important;
+    z-index: 2;
+}
+
+#ai-assistant-dialog textarea {
+    display: block !important;
+    width: 100% !important;
+    padding: 8px 12px !important;
+    padding-right: 118px !important;
+    /* 为发送按钮留出空间 */
+    border: 1px solid #E5E7EB !important;
+    border-radius: 18px !important;
+    resize: none !important;
+    font-family: inherit !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    background: #F9FAFB !important;
+    color: #333 !important;
+    transition: all 0.2s ease !important;
+    min-height: 36px !important;
+    max-height: 120px !important;
+}
+
+#ai-assistant-dialog #askButton {
+    position: absolute !important;
+    right: 24px !important;
+    /* 考虑输入容器的内边距 */
+    bottom: 16px !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #007AFF !important;
+    border: none !important;
+    border-radius: 50% !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 6px rgba(0, 122, 255, 0.2) !important;
+    z-index: 1 !important;
+}
+
+#ai-assistant-dialog #askButton::before {
+    content: "" !important;
+    display: block !important;
+    width: 0 !important;
+    height: 0 !important;
+    border-style: solid !important;
+    border-width: 6px 0 6px 10px !important;
+    border-color: transparent transparent transparent white !important;
+    margin-left: 3px !important;
+    transition: all 0.2s ease !important;
+}
+
+#ai-assistant-dialog #askButton.generating::before {
+    content: "" !important;
+    width: 10px !important;
+    height: 10px !important;
+    border: none !important;
+    background-color: white !important;
+    margin-left: 0 !important;
+}
+
+#ai-assistant-dialog #askButton:hover {
+    background: #0056b3 !important;
+    transform: translateY(50%) scale(1.05) !important;
+    box-shadow: 0 4px 8px rgba(0, 122, 255, 0.3) !important;
+}
+
+#ai-assistant-dialog #askButton:active {
+    transform: translateY(50%) scale(0.95) !important;
+    box-shadow: 0 2px 4px rgba(0, 122, 255, 0.2) !important;
+}
+
+#ai-assistant-dialog #askButton:disabled {
+    background: #E0E0E0 !important;
+    cursor: not-allowed !important;
+    transform: translateY(50%) !important;
+    box-shadow: none !important;
+}
+
+#ai-assistant-dialog #askButton:disabled::before {
+    border-color: transparent transparent transparent rgba(255, 255, 255, 0.6) !important;
+}
+
+#ai-assistant-dialog textarea:focus {
+    border-color: #007AFF !important;
+    outline: none !important;
+    background: white !important;
+}
+
+/* 开关样 */
+#ai-assistant-dialog .header {
+    padding: 8px 16px;
+    border-bottom: 1px solid #eee;
+    background-color: #fff;
+}
+
+#ai-assistant-dialog .toggle-ball {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#ai-assistant-dialog .toggle-label {
+    font-size: 14px;
+    color: #666;
+}
+
+#ai-assistant-dialog .switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+#ai-assistant-dialog .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+#ai-assistant-dialog .switch .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 20px;
+}
+
+#ai-assistant-dialog .switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+#ai-assistant-dialog .switch input:checked+.slider {
+    background-color: #007AFF;
+}
+
+#ai-assistant-dialog .switch input:checked+.slider:before {
+    transform: translateX(20px);
+}
+
+/* 自定义滚动条样式 */
+#ai-assistant-dialog ::-webkit-scrollbar {
+    width: 8px;
+}
+
+#ai-assistant-dialog ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+#ai-assistant-dialog ::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+#ai-assistant-dialog ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* 添加动画关键帧 */
+@keyframes slideIn {
+    from {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    to {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+}
+
+/* 应用动画 */
+#ai-assistant-dialog.show {
+    animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#ai-assistant-dialog.hide {
+    animation: slideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 消息容器的相对定位，用于放置复制按钮 */
+#ai-assistant-dialog .message {
+    position: relative;
+}
+
+/* 右键菜单样式 */
+.context-menu {
+    position: fixed !important;
+    background: white !important;
+    border: 1px solid #ddd !important;
+    border-radius: 4px !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+    padding: 4px 0 !important;
+    z-index: 2147483647;
+    min-width: 150px !important;
+}
+
+.context-menu-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.context-menu-item:hover {
+    background-color: #f5f5f5;
+}
+
+/* 复制成功提示样式 */
+.copy-toast {
+    position: fixed !important;
+    background-color: rgba(0, 0, 0, 0.8) !important;
+    color: white !important;
+    padding: 8px 16px !important;
+    border-radius: 4px !important;
+    font-size: 14px !important;
+    z-index: 2147483647;
+    pointer-events: none !important;
+    animation: fadeInOut 2s ease !important;
+    white-space: nowrap !important;
+}
+
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) translateY(10px);
+    }
+
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateY(0);
+    }
+
+    80% {
+        opacity: 1;
+        transform: translate(-50%, -50%) translateY(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) translateY(-10px);
+    }
+}
+
+/* 悬浮球边缘状态样式 */
+#ai-assistant-ball.edge-left {
+    transform: translateX(-50%) !important;
+    left: 0 !important;
+    transition: all 0.3s ease;
+}
+
+#ai-assistant-ball.edge-right {
+    transform: translateX(50%) !important;
+    right: 0 !important;
+    left: auto !important;
+    transition: all 0.3s ease;
+}
+
+#ai-assistant-ball.edge-top {
+    transform: translateY(-50%) !important;
+    top: 0 !important;
+    transition: all 0.3s ease;
+}
+
+#ai-assistant-ball.edge-bottom {
+    transform: translateY(50%) !important;
+    bottom: 0 !important;
+    top: auto !important;
+    transition: all 0.3s ease;
+}
+
+/* 悬浮时恢复完整大小 */
+#ai-assistant-ball.edge-left:hover {
+    transform: translateX(0) !important;
+}
+
+#ai-assistant-ball.edge-right:hover {
+    transform: translateX(0) !important;
+}
+
+#ai-assistant-ball.edge-top:hover {
+    transform: translateY(0) !important;
+}
+
+#ai-assistant-ball.edge-bottom:hover {
+    transform: translateY(0) !important;
+}
+
+/* 右键菜单样式 */
+.ball-context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 4px 0;
+    z-index: 10000;
+    min-width: 100px;
+}
+
+.ball-context-menu-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ball-context-menu-item:hover {
+    background-color: #f5f5f5;
+}
+
+/* 修改悬浮球和设置按钮的容器样式 */
+.ball-container {
+    position: fixed;
+    z-index: 9999;
+    width: 50px;
+    height: 50px;
+}
+
+/* 透明的 hover 桥接区：覆盖球与所有展开按钮的路径，避免空隙打断 hover */
+.ball-container::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 60px;
+    height: 220px;
+    transform: translate(-50%, -50%);
+    background: transparent;
+    pointer-events: none;
+}
+
+/* 鼠标进入容器（命中球或按钮实体）后激活桥接层，
+   后续即使滑过空白处也能维持 hover 状态；
+   平时不拦截页面点击 */
+.ball-container:hover::before {
+    pointer-events: auto;
+}
+
+/* 创建一个hover区域，包含悬浮球和设置按钮 */
+.ball-hover-area {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+/* 设置按钮基础样式 */
+.settings-button {
+    width: 32px;
+    height: 32px;
+    background-color: #007AFF;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    color: white;
+    font-size: 16px;
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    margin-top: 8px;
+    transform: translateX(-50%) scale(0.8);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 当容器被hover时显示设置按钮 */
+.ball-container:hover .settings-button {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) scale(1);
+}
+
+/* 设置按钮hover效果 */
+.settings-button:hover {
+    background-color: #0056b3;
+}
+
+/* 当悬浮球在底部边缘时，设置按钮显示在上方 */
+.ball-container:has(#ai-assistant-ball.edge-bottom) .settings-button {
+    top: auto;
+    bottom: 100%;
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+/* 当悬浮球在顶部边缘时，设置按钮显示在下方 */
+.ball-container:has(#ai-assistant-ball.edge-top) .settings-button {
+    top: 100%;
+    bottom: auto;
+    margin-bottom: 0;
+    margin-top: 8px;
+}
+
+/* 当悬浮球在左边缘时，设置按钮显示在下方 */
+.ball-container:has(#ai-assistant-ball.edge-left) .settings-button {
+    top: 100%;
+    bottom: auto;
+    margin-bottom: 0;
+    margin-top: 8px;
+}
+
+/* 当悬浮球在右边缘时，设置按钮显示在下方 */
+.ball-container:has(#ai-assistant-ball.edge-right) .settings-button {
+    top: 100%;
+    bottom: auto;
+    margin-bottom: 0;
+    margin-top: 8px;
+}
+
+/* 确保置按钮可以接收点击事件 */
+.settings-button {
+    pointer-events: auto;
+}
+
+/* 脚本按钮基础样式（紧贴设置按钮下沿，避免空隙打断 hover 链） */
+.script-button {
+    width: 32px;
+    height: 32px;
+    background-color: #007AFF;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    color: white;
+    font-size: 16px;
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    margin-top: 48px;
+    transform: translateX(-50%) scale(0.8);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+}
+
+.ball-container:hover .script-button {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) scale(1);
+}
+
+.script-button:hover {
+    background-color: #0056b3;
+}
+
+/* 边缘自适应：始终紧贴设置按钮，方向跟随设置按钮 */
+.ball-container:has(#ai-assistant-ball.edge-bottom) .script-button {
+    top: auto;
+    bottom: 100%;
+    margin-top: 0;
+    margin-bottom: 48px;
+}
+
+.ball-container:has(#ai-assistant-ball.edge-top) .script-button {
+    top: 100%;
+    bottom: auto;
+    margin-bottom: 0;
+    margin-top: 48px;
+}
+
+.ball-container:has(#ai-assistant-ball.edge-left) .script-button {
+    top: 100%;
+    bottom: auto;
+    margin-bottom: 0;
+    margin-top: 48px;
+}
+
+.ball-container:has(#ai-assistant-ball.edge-right) .script-button {
+    top: 100%;
+    bottom: auto;
+    margin-bottom: 0;
+    margin-top: 48px;
+}
+
+/* 与设置按钮一致：隐藏状态下也保留 pointer-events，避免空隙打断 hover 链路 */
+.script-button {
+    pointer-events: auto;
+}
+
+/* 中断消息样式 */
+#ai-assistant-dialog .message.assistant-message[style*="text-align: center"] {
+    max-width: none !important;
+    margin: 4px 0 !important;
+    opacity: 0.7 !important;
+}
+
+/* 调整大小的手柄样式 */
+#ai-assistant-dialog .resize-handle {
+    position: absolute !important;
+    width: 20px !important;
+    height: 20px !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    cursor: se-resize !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 2147483645 !important;
+}
+
+/* 调整手柄的图标 */
+#ai-assistant-dialog .resize-handle::before {
+    content: "" !important;
+    width: 8px !important;
+    height: 8px !important;
+    border-right: 2px solid #999 !important;
+    border-bottom: 2px solid #999 !important;
+    position: absolute !important;
+    right: 4px !important;
+    bottom: 4px !important;
+}
+
+/* 确保对话框可以调整大小 */
+#ai-assistant-dialog {
+    resize: none !important;
+    min-width: 300px !important;
+    min-height: 400px !important;
+}
+
+/* 用户消息中的Markdown样式 */
+#ai-assistant-dialog .user-message code {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    padding: 2px 4px !important;
+    border-radius: 4px !important;
+    font-family: monospace !important;
+}
+
+#ai-assistant-dialog .user-message pre {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    padding: 8px !important;
+    border-radius: 4px !important;
+    overflow-x: auto !important;
+    margin: 8px 0 !important;
+}
+
+#ai-assistant-dialog .user-message a {
+    color: white !important;
+    text-decoration: underline !important;
+}
+
+#ai-assistant-dialog .user-message p {
+    margin: 0 !important;
+}
+
+#ai-assistant-dialog .user-message ul,
+#ai-assistant-dialog .user-message ol {
+    margin: 4px 0 !important;
+    padding-left: 20px !important;
+}
+
+#ai-assistant-dialog .user-message blockquote {
+    border-left: 3px solid rgba(255, 255, 255, 0.3) !important;
+    margin: 4px 0 !important;
+    padding-left: 8px !important;
+}
+
+/* 确保对话框内容不会被遮挡 */
+#ai-assistant-dialog::before {
+    content: '' !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: -1 !important;
+    pointer-events: none !important;
+}
+
+/* 添加遮罩层样式 */
+.dialog-overlay {
+    display: none !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background-color: transparent !important;
+    z-index: 2147483644 !important;
+    /* 比对话框低一级 */
+    pointer-events: none !important;
+}
+
+/* 拖动时显示遮罩层 */
+.dialog-overlay.dragging {
+    display: block !important;
+    pointer-events: auto !important;
+}
+
+/* 确保对话框在遮罩层之上 */
+#ai-assistant-dialog {
+    /* ... 其他样式保持不变 ... */
+    z-index: 2147483645 !important;
+}
+
+/* 修改Tokens统计样式，隐藏显示 */
+#ai-assistant-dialog .tokens-counter {
+    position: absolute !important;
+    top: 0 !important;
+    right: 8px !important;
+    font-size: 12px !important;
+    color: #666 !important;
+    padding: 4px 8px !important;
+    background: transparent !important;
+    z-index: 1 !important;
+    user-select: none !important;
+    display: none !important;
+}
+
+/* @ 提示下拉菜单 */
+#ai-assistant-dialog .mention-dropdown {
+    position: absolute !important;
+    left: 12px !important;
+    right: 12px !important;
+    bottom: calc(100% - 6px) !important;
+    max-height: 240px !important;
+    overflow-y: auto !important;
+    background: #ffffff !important;
+    border: 1px solid #E5E7EB !important;
+    border-radius: 12px !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12) !important;
+    z-index: 2147483647 !important;
+    padding: 4px 0 !important;
+    font-size: 13px !important;
+}
+
+#ai-assistant-dialog .mention-dropdown[hidden] {
+    display: none !important;
+}
+
+#ai-assistant-dialog .mention-dropdown .mention-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 6px 10px !important;
+    cursor: pointer !important;
+    color: #111827 !important;
+}
+
+#ai-assistant-dialog .mention-dropdown .mention-row.active,
+#ai-assistant-dialog .mention-dropdown .mention-row:hover {
+    background: #F3F4F6 !important;
+}
+
+#ai-assistant-dialog .mention-dropdown .mention-favicon {
+    width: 16px !important;
+    height: 16px !important;
+    flex: 0 0 16px !important;
+    border-radius: 3px !important;
+}
+
+#ai-assistant-dialog .mention-dropdown .mention-text {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+}
+
+#ai-assistant-dialog .mention-dropdown .mention-title {
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+#ai-assistant-dialog .mention-dropdown .mention-url {
+    color: #6B7280 !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+#ai-assistant-dialog .mention-dropdown .mention-empty {
+    padding: 8px 12px !important;
+    color: #9CA3AF !important;
+    text-align: center !important;
+}
+
+/* === 已标记图片缩略图条带 === */
+#ai-assistant-dialog .input-container {
+    flex-direction: column !important;
+    align-items: stretch !important;
+}
+#ai-assistant-dialog .marked-images-strip {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    padding: 8px 10px !important;
+    margin-bottom: 2px !important;
+    background: #F8FBFF !important;
+    border: 1px solid #BBD7FF !important;
+    border-radius: 6px !important;
+    min-height: 60px !important;
+    max-height: 76px !important;
+    box-shadow: inset 0 0 0 1px rgba(0, 122, 255, 0.06) !important;
+}
+#ai-assistant-dialog .marked-images-strip[hidden] { display: none !important; }
+#ai-assistant-dialog .marked-images-strip::before {
+    content: "Images " attr(data-count) !important;
+    flex: 0 0 auto !important;
+    color: #1D4ED8 !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    margin-right: 2px !important;
+}
+#ai-assistant-dialog .marked-thumb {
+    position: relative !important;
+    flex: 0 0 auto !important;
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 4px !important;
+    overflow: hidden !important;
+    border: 1px solid #D1D5DB !important;
+    background: #fff !important;
+}
+#ai-assistant-dialog .marked-thumb img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+}
+#ai-assistant-dialog .marked-thumb-close {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: 16px !important;
+    height: 16px !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 0 0 4px !important;
+    background: rgba(0,0,0,0.55) !important;
+    color: #fff !important;
+    font-size: 12px !important;
+    line-height: 14px !important;
+    cursor: pointer !important;
+}
+#ai-assistant-dialog .marked-thumb-close:hover { background: rgba(220,38,38,0.85) !important; }
+
+/* === 输入区工具条 === */
+#ai-assistant-dialog .input-toolbar {
+    position: absolute !important;
+    right: 60px !important;   /* 给右侧的圆形发送按钮让位 */
+    bottom: 17px !important;
+    display: flex !important;
+    gap: 4px !important;
+    z-index: 1 !important;
+}
+#ai-assistant-dialog .toolbar-btn {
+    width: 26px !important;
+    height: 26px !important;
+    padding: 0 !important;
+    border: 1px solid #E5E7EB !important;
+    background: #fff !important;
+    border-radius: 50% !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 13px !important;
+    color: #4B5563 !important;
+    line-height: 1 !important;
+    transition: all 0.15s ease !important;
+}
+#ai-assistant-dialog .toolbar-btn:hover {
+    border-color: #007AFF !important;
+    color: #007AFF !important;
+}
+
+/* === 区域截图遮罩 === */
+.webchat-region-overlay { cursor: crosshair !important; }
+.webchat-region-overlay * { box-sizing: border-box !important; }
+
+body{margin:0;background:#eef2f7;height:100vh;}#ai-assistant-dialog{opacity:1!important;visibility:visible!important;pointer-events:auto!important;transform:scale(1)!important;}</style><body><script>const ICONS = {
+    clear: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/></svg>',
+    export: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>',
+    sidebar: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/><path d="M7 9h4"/><path d="M7 13h4"/></svg>',
+    shot: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3"/><path d="M16 4h3a1 1 0 0 1 1 1v3"/><path d="M20 16v3a1 1 0 0 1-1 1h-3"/><path d="M8 20H5a1 1 0 0 1-1-1v-3"/><circle cx="12" cy="12" r="3"/></svg>',
+    image: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="10" r="2"/><path d="M21 16l-5-5L5 19"/></svg>',
+    clearImages: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M10 11v5"/><path d="M14 11v5"/><path d="M19 6l-1 14H6L5 6"/></svg>'
+};
+const DIALOG_HTML = `
+    <div class="container">
+        <div class="header">
+            <div class="tokens-counter">Tokens: 0</div>
+            <div class="header-actions">
+                <button class="header-btn" id="clearChatBtn" title="Clear chat" aria-label="Clear chat">${ICONS.clear}</button>
+                <button class="header-btn" id="exportChatBtn" title="Export chat" aria-label="Export chat">${ICONS.export}</button>
+                <button class="header-btn" id="sidebarToggleBtn" title="Toggle sidebar" aria-label="Toggle sidebar">${ICONS.sidebar}</button>
+            </div>
+        </div>
+        <div id="chat-container" class="chat-container">
+            <div id="messages" class="messages"></div>
+        </div>
+        <div class="input-container">
+            <div id="markedImagesStrip" class="marked-images-strip" hidden></div>
+            <div id="mentionDropdown" class="mention-dropdown" hidden></div>
+            <textarea id="userInput" placeholder="可以使用 @ 引用其他 tab..." rows="2"></textarea>
+            <div class="input-toolbar">
+                <button class="toolbar-btn" id="regionShotBtn" type="button" title="Region screenshot" aria-label="Region screenshot">${ICONS.shot}</button>
+                <button class="toolbar-btn" id="attachImageBtn" type="button" title="Attach image" aria-label="Attach image">${ICONS.image}</button>
+                <button class="toolbar-btn" id="clearMarkedImagesBtn" type="button" title="Clear images" aria-label="Clear images" hidden>${ICONS.clearImages}</button>
+            </div>
+            <input id="imageFileInput" type="file" accept="image/*" multiple hidden>
+            <button id="askButton" class="send-button"></button>
+        </div>
+    </div>
+    <div class="resize-handle"></div>
+`;
+
+document.body.insertAdjacentHTML('beforeend','<div id="ai-assistant-dialog" class="show">'+DIALOG_HTML+'</div>');
+const strip=document.querySelector('#markedImagesStrip'); strip.hidden=false; strip.dataset.count='1'; strip.innerHTML='<div class="marked-thumb"><img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2244%22 height=%2244%22%3E%3Crect width=%2244%22 height=%2244%22 fill=%22%23007AFF%22/%3E%3Ccircle cx=%2222%22 cy=%2222%22 r=%2210%22 fill=%22white%22/%3E%3C/svg%3E"><button class="marked-thumb-close">x</button></div>'; document.querySelector('#clearMarkedImagesBtn').hidden=false;</script></body>

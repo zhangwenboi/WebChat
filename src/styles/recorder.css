@@ -1,0 +1,247 @@
+/* 元素选取器覆盖层 */
+#webchat-script-picker-overlay {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(0, 122, 255, 0.15);
+    border: 2px solid #007AFF;
+    border-radius: 4px;
+    z-index: 2147483640;
+    box-sizing: border-box;
+    transition: all 0.05s linear;
+    display: none;
+}
+
+#webchat-script-picker-tooltip {
+    position: absolute;
+    background: #1f2937;
+    color: #fff;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    z-index: 2147483641;
+    max-width: 480px;
+    word-break: break-all;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    pointer-events: none;
+    display: none;
+}
+
+/* 候选 locator 弹窗（Shift+点击触发） */
+#webchat-script-picker-popup {
+    position: absolute;
+    z-index: 2147483642;
+    background: #ffffff;
+    color: #111827;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+    min-width: 380px;
+    max-width: 560px;
+    max-height: 360px;
+    overflow: auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 12px;
+}
+
+#webchat-script-picker-popup .wc-pick-pop-title {
+    padding: 8px 12px;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+    background: #f9fafb;
+    border-radius: 8px 8px 0 0;
+}
+
+#webchat-script-picker-popup .wc-pick-pop-list {
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+}
+
+#webchat-script-picker-popup .wc-pick-pop-list li {
+    padding: 6px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-left: 3px solid transparent;
+}
+
+#webchat-script-picker-popup .wc-pick-pop-list li:hover,
+#webchat-script-picker-popup .wc-pick-pop-list li:focus {
+    background: #eff6ff;
+    border-left-color: #007AFF;
+    outline: none;
+}
+
+#webchat-script-picker-popup .wc-pick-pop-tag {
+    flex: 0 0 auto;
+    background: #e5e7eb;
+    color: #374151;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+#webchat-script-picker-popup code {
+    flex: 1 1 auto;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    color: #1f2937;
+    word-break: break-all;
+}
+
+#webchat-script-picker-popup .wc-pick-pop-foot {
+    padding: 6px 12px;
+    color: #9ca3af;
+    border-top: 1px solid #f3f4f6;
+    background: #f9fafb;
+    border-radius: 0 0 8px 8px;
+}
+
+/* 录制状态指示 */
+#webchat-script-panel.webchat-script-panel-recording {
+    width: 320px !important;
+    height: auto !important;
+    max-height: 320px;
+}
+
+.webchat-script-recording {
+    padding: 12px;
+}
+
+.webchat-script-recording-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #dc2626;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.webchat-script-rec-dot {
+    width: 10px;
+    height: 10px;
+    background: #dc2626;
+    border-radius: 50%;
+    animation: webchat-rec-blink 1s ease-in-out infinite;
+}
+
+@keyframes webchat-rec-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.webchat-script-rec-count {
+    color: #6b7280;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.webchat-script-rec-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 12px;
+    color: #374151;
+}
+
+.webchat-script-rec-list li {
+    padding: 4px 8px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+/* 录制时的顶部悬浮控制条（独立于主面板，最高 z-index） */
+#webchat-script-recording-bar {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2147483647;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: #1f2937;
+    color: #fff;
+    border-radius: 999px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 13px;
+    user-select: none;
+}
+
+#webchat-script-recording-bar.webchat-rec-bar-open {
+    display: inline-flex;
+}
+
+.webchat-rec-bar-drag {
+    cursor: grab;
+    color: #9ca3af;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 4px;
+}
+
+.webchat-rec-bar-drag:active {
+    cursor: grabbing;
+}
+
+.webchat-rec-bar-dot {
+    width: 10px;
+    height: 10px;
+    background: #ef4444;
+    border-radius: 50%;
+    animation: webchat-rec-blink 1s ease-in-out infinite;
+}
+
+.webchat-rec-bar-label {
+    font-weight: 600;
+    color: #fecaca;
+}
+
+.webchat-rec-bar-count {
+    color: #d1d5db;
+    font-size: 12px;
+    padding-right: 4px;
+    border-right: 1px solid #374151;
+}
+
+.webchat-rec-bar-btn {
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid #374151;
+    background: #374151;
+    color: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: inherit;
+    transition: all 0.15s;
+}
+
+.webchat-rec-bar-btn:hover {
+    background: #4b5563;
+}
+
+.webchat-rec-bar-btn-primary {
+    background: #007AFF;
+    border-color: #007AFF;
+}
+
+.webchat-rec-bar-btn-primary:hover {
+    background: #0056b3;
+    border-color: #0056b3;
+}
+
+.webchat-rec-bar-btn-danger {
+    background: #dc2626;
+    border-color: #dc2626;
+}
+
+.webchat-rec-bar-btn-danger:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+}

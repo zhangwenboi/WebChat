@@ -1,0 +1,17 @@
+{
+  "name": "webchat",
+  "version": "2.0.0",
+  "description": "基于当前网页内容的AI增强问答系统",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/build.js --watch",
+    "build": "node scripts/build.js"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "@medv/finder": "^4.0.2"
+  }
+}
