@@ -1135,3 +1135,227 @@ body.webchat-sidebar-right {
 /* === 区域截图遮罩 === */
 .webchat-region-overlay { cursor: crosshair !important; }
 .webchat-region-overlay * { box-sizing: border-box !important; }
+
+/* === 对话选择器（content dialog） === */
+#ai-assistant-dialog .conv-selector {
+    position: relative !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+#ai-assistant-dialog .conv-selector-btn {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    max-width: 100% !important;
+    padding: 5px 10px !important;
+    border: 1px solid #E5E7EB !important;
+    background: #F9FAFB !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    transition: all 0.15s !important;
+}
+#ai-assistant-dialog .conv-selector-btn:hover {
+    background: #F3F4F6 !important;
+    border-color: #D1D5DB !important;
+}
+#ai-assistant-dialog .conv-title-text {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    max-width: 120px !important;
+    font-weight: 500 !important;
+}
+#ai-assistant-dialog .conv-selector-btn svg {
+    flex-shrink: 0 !important;
+    width: 14px !important;
+    height: 14px !important;
+    color: #9CA3AF !important;
+}
+
+/* 下拉面板 — 大卡片风格 */
+#ai-assistant-dialog .conv-dropdown {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 340px !important;
+    max-height: 420px !important;
+    background: #fff !important;
+    border: 1px solid #E5E7EB !important;
+    border-radius: 14px !important;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.03) !important;
+    z-index: 300 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    animation: convFadeIn 0.18s ease-out !important;
+}
+@keyframes convFadeIn {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+#ai-assistant-dialog .conv-dropdown[hidden] {
+    display: none !important;
+}
+
+/* 下拉头部 */
+#ai-assistant-dialog .conv-dropdown-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 14px 16px 10px !important;
+    border-bottom: 1px solid #F3F4F6 !important;
+    flex-shrink: 0 !important;
+}
+#ai-assistant-dialog .conv-dropdown-title {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: #1F2937 !important;
+}
+#ai-assistant-dialog .conv-dropdown-add {
+    width: 30px !important;
+    height: 30px !important;
+    border: none !important;
+    background: #F3F4F6 !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #374151 !important;
+    font-size: 18px !important;
+    transition: all 0.15s !important;
+}
+#ai-assistant-dialog .conv-dropdown-add:hover {
+    background: #E5E7EB !important;
+    color: #111827 !important;
+}
+
+/* 下拉列表 */
+#ai-assistant-dialog .conv-dropdown-list {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding: 6px 8px !important;
+    max-height: 320px !important;
+}
+#ai-assistant-dialog .conv-dropdown-empty {
+    text-align: center !important;
+    color: #9CA3AF !important;
+    padding: 32px 16px !important;
+    font-size: 13px !important;
+}
+#ai-assistant-dialog .conv-dropdown-empty::before {
+    content: '💬' !important;
+    display: block !important;
+    font-size: 32px !important;
+    margin-bottom: 10px !important;
+}
+
+/* 下拉行 */
+#ai-assistant-dialog .conv-dropdown-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 10px 10px !important;
+    cursor: pointer !important;
+    border-radius: 10px !important;
+    transition: background 0.12s !important;
+    position: relative !important;
+}
+#ai-assistant-dialog .conv-dropdown-row:hover {
+    background: #F3F4F6 !important;
+}
+#ai-assistant-dialog .conv-dropdown-row.active {
+    background: #EFF6FF !important;
+}
+#ai-assistant-dialog .conv-dropdown-row.active .conv-row-title {
+    color: #1D4ED8 !important;
+}
+
+/* 行内图标 */
+#ai-assistant-dialog .conv-row-icon {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+    background: #F3F4F6 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 16px !important;
+    flex-shrink: 0 !important;
+}
+#ai-assistant-dialog .conv-dropdown-row.active .conv-row-icon {
+    background: #DBEAFE !important;
+}
+
+/* 行内文本区 */
+#ai-assistant-dialog .conv-row-content {
+    flex: 1 !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+}
+#ai-assistant-dialog .conv-row-title {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #1F2937 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+#ai-assistant-dialog .conv-row-meta {
+    font-size: 11px !important;
+    color: #9CA3AF !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+#ai-assistant-dialog .conv-row-meta-dot {
+    width: 3px !important;
+    height: 3px !important;
+    border-radius: 50% !important;
+    background: #D1D5DB !important;
+}
+
+/* 删除按钮 */
+#ai-assistant-dialog .conv-row-delete {
+    width: 28px !important;
+    height: 28px !important;
+    border: none !important;
+    background: transparent !important;
+    color: #9CA3AF !important;
+    font-size: 16px !important;
+    cursor: pointer !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    opacity: 0 !important;
+    transition: all 0.12s !important;
+}
+#ai-assistant-dialog .conv-dropdown-row:hover .conv-row-delete {
+    opacity: 1 !important;
+}
+#ai-assistant-dialog .conv-row-delete:hover {
+    background: #FEE2E2 !important;
+    color: #EF4444 !important;
+}
+
+/* 下拉遮罩 */
+#ai-assistant-dialog .conv-dropdown-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0,0,0,0.2) !important;
+    z-index: 299 !important;
+    animation: convBackdropIn 0.15s ease-out !important;
+}
+@keyframes convBackdropIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}

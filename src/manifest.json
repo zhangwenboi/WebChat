@@ -2,8 +2,9 @@
   "manifest_version": 3,
   "name": "WebChat",
   "version": "2.0.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx+gC7EuKQ17w7WZze/yqT3ipd8KbmdxQZM7Va5ecE5Py9YmFLfRhuw87b6X73CHRUmOZzsq9JzfHaXQpyQxGvp1f2Bx18rfnAy3sx8PUftkCUE5I2/bc9N+FG8V5YKqO6bXEohKgIVZn/gbb7taXozgKMGvp8lqUrMdQS51upEl4LGWpl8W8AQUGRd8+ZVhCgQDNVfrOypa5fuzJyZNCvQsoiqP3EqX7DopzDocGvTQ5ZgRlU/V0qooft09u4iVJd28gkjzkGHMMce67Z2OFwNtSHUWJVmfU5Z/8/KWAbu1JioHUZ4FVpOeLBA/KAiwLHL11fAaHm/72vgBE181k6wIDAQAB",
   "description": "基于当前网页内容的AI增强问答系统",
-  "permissions": ["activeTab", "tabs", "scripting", "storage", "downloads", "contextMenus"],
+  "permissions": ["activeTab", "tabs", "scripting", "storage", "downloads", "contextMenus", "sidePanel"],
   "background": {
     "service_worker": "background.js"
   },
@@ -11,17 +12,19 @@
     {
       "matches": ["<all_urls>"],
       "js": ["lib/marked.min.js", "content.js"],
-      "css": ["styles/content.css", "styles/panel.css", "styles/recorder.css"],
+      "css": ["styles/panel.css", "styles/recorder.css"],
       "run_at": "document_idle"
     }
   ],
   "action": {
-    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
   },
   "options_page": "options.html",
   "icons": {

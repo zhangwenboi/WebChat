@@ -9,10 +9,21 @@ import {
   clearHistoryForTab,
   createHistoryStore,
   getHistorySnapshot,
+  getHistoryByConv,
   recordAssistantMessage,
+  recordAssistantMessageToConv,
   recordUserMessage,
+  recordUserMessageToConv,
   setHistorySnapshot
 } from './chat-history.js';
+import {
+  listConversations,
+  createConversation,
+  deleteConversation,
+  switchConversation,
+  getActiveConversation,
+  ensureActiveConversation
+} from './conversation-manager.js';
 import { listAvailableTabs, extractTabContent, compressContent } from '../lib/tab-content.js';
 import { pickFallbackProvider, describeImages, formatImageDescriptions } from '../lib/vision-fallback.js';
 
@@ -25,6 +36,10 @@ let currentAnswers = {};
 let activePorts = {};
 let activeAborts = {};
 let completedAnswers = {};
+
+// 设置点击扩展图标时打开侧边栏（而非 popup）
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
+  .catch(err => console.warn('sidePanel.setPanelBehavior 失败：', err?.message || err));
 
 // 扩展安装时执行迁移
 chrome.runtime.onInstalled.addListener(async () => {
@@ -61,38 +76,76 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 // 处理来自 popup/content 的消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'saveHistory') {
-    setHistorySnapshot(sessionHistories, request.tabId, request.history);
-    sendResponse({ status: 'ok' });
+    setHistorySnapshot(sessionHistories, request.tabId, request.history)
+      .then(() => sendResponse({ status: 'ok' }));
+    return true;
   } else if (request.action === 'getHistory') {
-    const history = getHistorySnapshot(sessionHistories, request.tabId);
-    const state = generatingStates[request.tabId] || { isGenerating: false };
+    (async () => {
+      // 确保活跃对话存在
+      await ensureActiveConversation(request.tabId);
+      const history = await getHistorySnapshot(sessionHistories, request.tabId);
+      const state = generatingStates[request.tabId] || { isGenerating: false };
 
-    if (state.isGenerating && state.pendingQuestion) {
-      const lastMessage = history[history.length - 1];
-      if (!lastMessage || !lastMessage.isUser || lastMessage.content !== state.pendingQuestion) {
-        const updatedHistory = [...history, { content: state.pendingQuestion, isUser: true }];
-        sendResponse({
-          history: updatedHistory,
-          isGenerating: state.isGenerating,
-          pendingQuestion: state.pendingQuestion,
-          currentAnswer: currentAnswers[request.tabId] || ''
-        });
-        return true;
+      if (state.isGenerating && state.pendingQuestion) {
+        const lastMessage = history[history.length - 1];
+        if (!lastMessage || !lastMessage.isUser || lastMessage.content !== state.pendingQuestion) {
+          const updatedHistory = [...history, { content: state.pendingQuestion, isUser: true }];
+          sendResponse({
+            history: updatedHistory,
+            isGenerating: state.isGenerating,
+            pendingQuestion: state.pendingQuestion,
+            currentAnswer: currentAnswers[request.tabId] || ''
+          });
+          return;
+        }
       }
-    }
 
-    sendResponse({
-      history,
-      isGenerating: state.isGenerating,
-      pendingQuestion: state.pendingQuestion,
-      currentAnswer: currentAnswers[request.tabId] || ''
-    });
+      sendResponse({
+        history,
+        isGenerating: state.isGenerating,
+        pendingQuestion: state.pendingQuestion,
+        currentAnswer: currentAnswers[request.tabId] || ''
+      });
+    })();
+    return true;
   } else if (request.action === 'clearHistory') {
-    clearHistoryForTab(sessionHistories, request.tabId);
-    delete generatingStates[request.tabId];
-    delete currentAnswers[request.tabId];
-    delete completedAnswers[request.tabId];
+    (async () => {
+      await clearHistoryForTab(sessionHistories, request.tabId);
+      delete generatingStates[request.tabId];
+      delete currentAnswers[request.tabId];
+      delete completedAnswers[request.tabId];
+      sendResponse({ status: 'ok' });
+    })();
+    return true;
+  } else if (request.action === 'listConversations') {
+    listConversations(request.tabId).then(
+      (conversations) => sendResponse({ conversations }),
+      (err) => sendResponse({ error: err.message })
+    );
+    return true;
+  } else if (request.action === 'createConversation') {
+    createConversation(request.tabId).then(
+      (conv) => sendResponse({ conversation: conv }),
+      (err) => sendResponse({ error: err.message })
+    );
+    return true;
+  } else if (request.action === 'deleteConversation') {
+    deleteConversation(request.tabId, request.convId).then(
+      (ok) => sendResponse({ status: ok ? 'ok' : 'not-found' }),
+      (err) => sendResponse({ error: err.message })
+    );
+    return true;
+  } else if (request.action === 'switchConversation') {
+    switchConversation(request.tabId, request.convId).then(
+      (ok) => sendResponse({ status: ok ? 'ok' : 'not-found' }),
+      (err) => sendResponse({ error: err.message })
+    );
+    return true;
+  } else if (request.action === 'reloadExtension') {
     sendResponse({ status: 'ok' });
+    // 延迟一点让 sendResponse 发出去
+    setTimeout(() => chrome.runtime.reload(), 100);
+    return true;
   } else if (request.action === 'getCurrentTab') {
     sendResponse({ tabId: sender.tab.id });
   } else if (request.action === 'openOptions') {
@@ -100,6 +153,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ status: 'ok' });
   } else if (request.action === 'downloadScript') {
     handleDownloadScript(request).then(sendResponse, (err) => sendResponse({ ok: false, error: err.message }));
+    return true;
+  } else if (request.action === 'downloadImage') {
+    handleDownloadImage(request).then(sendResponse, (err) => sendResponse({ ok: false, error: err.message }));
     return true;
   } else if (request.action === 'captureScreenshot') {
     handleCaptureScreenshot(sender).then(sendResponse, (err) => sendResponse({ error: err.message }));
@@ -134,6 +190,21 @@ async function handleDownloadScript({ content, filename, mime }) {
     chrome.downloads.download({
       url: dataUrl,
       filename: filename || 'webchat-script.json',
+      saveAs: false
+    }, (id) => {
+      if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+      else resolve({ ok: true, id });
+    });
+  });
+}
+
+async function handleDownloadImage({ dataUrl, filename }) {
+  if (!dataUrl || !filename) throw new Error('dataUrl 和 filename 不能为空');
+  // content script 已将图片转成 data URL（带页面 Referer 的 fetch），这里直接下载
+  return new Promise((resolve, reject) => {
+    chrome.downloads.download({
+      url: dataUrl,
+      filename: 'webchat-xhs-covers/' + filename,
       saveAs: false
     }, (id) => {
       if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
@@ -391,13 +462,23 @@ function buildUserPrompt({
 
 // 核心：流式生成回答
 async function handleAnswerGeneration(port, tabId, payload) {
-  const { pageContent, question, images = [], referencedTabs = [] } = payload;
+  const { pageContent, question, images = [], referencedTabs = [], systemPromptOverride, convId } = payload;
   const abortCtrl = new AbortController();
   activeAborts[tabId] = abortCtrl;
+  // 使用传入的 convId，若无则回退到活跃对话
+  const targetConvId = convId || null;
 
   try {
-    // 保存用户问题到历史
-    recordUserMessage(sessionHistories, tabId, question);
+    // 保存用户问题到历史（持久化），失败不影响主流程
+    try {
+      if (targetConvId) {
+        await recordUserMessageToConv(sessionHistories, tabId, targetConvId, question);
+      } else {
+        await recordUserMessage(sessionHistories, tabId, question);
+      }
+    } catch (e) {
+      console.warn('保存用户消息失败:', e?.message || e);
+    }
 
     currentAnswers[tabId] = '';
     completedAnswers[tabId] = null;
@@ -421,12 +502,15 @@ async function handleAnswerGeneration(port, tabId, payload) {
     const providerConfig = settings.providers[providerKey] || {};
     const adapter = new ApiAdapter(providerKey, providerConfig);
 
-    // 构建消息
-    let messages = [{ role: 'system', content: settings.systemPrompt }];
+    // 构建消息 — systemPromptOverride 用于小红书重写等特殊场景
+    const effectiveSystemPrompt = systemPromptOverride || settings.systemPrompt;
+    let messages = [{ role: 'system', content: effectiveSystemPrompt }];
 
     // 添加历史上下文（注意：不重复包含本轮的 user question，下面单独追加）
     if (settings.enableContext) {
-      const history = getHistorySnapshot(sessionHistories, tabId);
+      const history = targetConvId
+        ? await getHistoryByConv(sessionHistories, tabId, targetConvId)
+        : await getHistorySnapshot(sessionHistories, tabId);
       const maxMessages = settings.maxContextRounds * 2;
       const recentHistory = history.slice(-(maxMessages));
       // 去掉末尾刚 push 的 user question，避免下方重复添加
@@ -598,7 +682,15 @@ async function handleAnswerGeneration(port, tabId, payload) {
         port.postMessage({ type: 'answer-end', markdownContent: accumulatedResponse });
       } catch {}
 
-      recordAssistantMessage(sessionHistories, tabId, accumulatedResponse);
+      try {
+        if (targetConvId) {
+          await recordAssistantMessageToConv(sessionHistories, tabId, targetConvId, accumulatedResponse);
+        } else {
+          await recordAssistantMessage(sessionHistories, tabId, accumulatedResponse);
+        }
+      } catch (e) {
+        console.warn('保存助手消息失败:', e?.message || e);
+      }
     } else {
       completedAnswers[tabId] = accumulatedResponse;
     }
@@ -628,15 +720,14 @@ async function handleAnswerGeneration(port, tabId, payload) {
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === 'sync') {
     if (changes.enableContext && !changes.enableContext.newValue) {
-      clearAllHistories(sessionHistories);
+      clearAllHistories(sessionHistories).catch(err => console.warn('清空历史失败:', err));
     }
   }
 });
 
-// 标签页更新/关闭时清理
+// 标签页更新/关闭时清理（不再清除持久化对话，只清理运行状态）
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === 'loading') {
-    clearHistoryForTab(sessionHistories, tabId);
     delete generatingStates[tabId];
     delete currentAnswers[tabId];
     delete activePorts[tabId];
@@ -650,7 +741,6 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
-  clearHistoryForTab(sessionHistories, tabId);
   delete generatingStates[tabId];
   delete currentAnswers[tabId];
   delete activePorts[tabId];

@@ -10,8 +10,8 @@ export const PROVIDERS = {
   openai: {
     name: 'OpenAI',
     apiBase: 'https://api.openai.com/v1/chat/completions',
-    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
-    defaultModel: 'gpt-4o-mini',
+    models: ['gpt-5.5', 'gpt-5.4', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+    defaultModel: 'gpt-5.5',
     requiresKey: true,
     authType: 'bearer',
     requestFormat: 'openai',
@@ -24,8 +24,8 @@ export const PROVIDERS = {
   deepseek: {
     name: 'DeepSeek',
     apiBase: 'https://api.deepseek.com/chat/completions',
-    models: ['deepseek-chat', 'deepseek-reasoner'],
-    defaultModel: 'deepseek-chat',
+    models: ['deepseek-v4-pro', 'deepseek-v4-flash', 'deepseek-chat', 'deepseek-reasoner'],
+    defaultModel: 'deepseek-v4-pro',
     requiresKey: true,
     authType: 'bearer',
     requestFormat: 'openai',

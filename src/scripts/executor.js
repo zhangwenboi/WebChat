@@ -524,6 +524,12 @@ function resolveStep(step, variables) {
 
 export const actions = {
     async navigate(params) {
+        // 如果已在目标页面（忽略末尾斜杠），跳过导航避免刷新导致脚本中断
+        const target = String(params.url || '').replace(/\/+$/, '');
+        const current = window.location.href.replace(/\/+$/, '');
+        if (target && current === target) {
+            return;
+        }
         window.location.href = params.url;
         await sleep(200);
     },

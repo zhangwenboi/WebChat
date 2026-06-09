@@ -6,17 +6,37 @@ const ICONS = {
     sidebar: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/><path d="M7 9h4"/><path d="M7 13h4"/></svg>',
     shot: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3"/><path d="M16 4h3a1 1 0 0 1 1 1v3"/><path d="M20 16v3a1 1 0 0 1-1 1h-3"/><path d="M8 20H5a1 1 0 0 1-1-1v-3"/><circle cx="12" cy="12" r="3"/></svg>',
     image: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="10" r="2"/><path d="M21 16l-5-5L5 19"/></svg>',
-    clearImages: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M10 11v5"/><path d="M14 11v5"/><path d="M19 6l-1 14H6L5 6"/></svg>'
+    clearImages: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M10 11v5"/><path d="M14 11v5"/><path d="M19 6l-1 14H6L5 6"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>',
+    refresh: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 4v6h6"/><path d="M3.5 14.5A9 9 0 1 0 2 12"/></svg>',
+    chevronDown: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/></svg>'
 };
 
 const DIALOG_HTML = `
     <div class="container">
         <div class="header">
+            <div class="conv-selector">
+                <button class="conv-selector-btn" id="convSelectorBtn" title="切换对话" aria-label="切换对话">
+                    <span class="conv-title-text">新对话</span>
+                    ${ICONS.chevronDown}
+                </button>
+                <div class="conv-dropdown-backdrop" id="convDropdownBackdrop" hidden></div>
+                <div class="conv-dropdown" id="convDropdown" hidden>
+                    <div class="conv-dropdown-header">
+                        <span class="conv-dropdown-title">对话列表</span>
+                        <button class="conv-dropdown-add" id="convDropdownAdd" title="新建对话">+</button>
+                    </div>
+                    <div class="conv-dropdown-list" id="convDropdownList"></div>
+                </div>
+            </div>
             <div class="tokens-counter">Tokens: 0</div>
             <div class="header-actions">
-                <button class="header-btn" id="clearChatBtn" title="Clear chat" aria-label="Clear chat">${ICONS.clear}</button>
-                <button class="header-btn" id="exportChatBtn" title="Export chat" aria-label="Export chat">${ICONS.export}</button>
-                <button class="header-btn" id="sidebarToggleBtn" title="Toggle sidebar" aria-label="Toggle sidebar">${ICONS.sidebar}</button>
+                <button class="header-btn" id="newChatBtn" title="新建对话" aria-label="新建对话">${ICONS.plus}</button>
+                <button class="header-btn" id="refreshBtn" title="刷新扩展" aria-label="刷新扩展">${ICONS.refresh}</button>
+                <button class="header-btn" id="clearChatBtn" title="清空对话" aria-label="清空对话">${ICONS.clear}</button>
+                <button class="header-btn" id="exportChatBtn" title="导出对话" aria-label="导出对话">${ICONS.export}</button>
+                <button class="header-btn" id="sidebarToggleBtn" title="切换侧边栏" aria-label="切换侧边栏">${ICONS.sidebar}</button>
             </div>
         </div>
         <div id="chat-container" class="chat-container">

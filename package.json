@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/build.js --watch",
-    "build": "node scripts/build.js"
+    "build": "node scripts/build.js",
+    "build:zip": "node scripts/build.js --zip"
   },
   "devDependencies": {
     "vite": "^6.3.5"

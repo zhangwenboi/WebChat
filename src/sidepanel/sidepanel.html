@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="popup.css">
+    <link rel="stylesheet" href="sidepanel.css">
     <script src="lib/marked.min.js"></script>
 </head>
 
@@ -24,6 +24,12 @@
                 </div>
             </div>
             <div class="header-actions">
+                <label class="xhs-toggle" title="小红书重写">
+                    <input type="checkbox" id="toggleXHS">
+                    <span class="xhs-slider"></span>
+                    <span class="xhs-label">📕</span>
+                </label>
+                <button class="header-btn" id="scriptBtn" title="脚本自动化">📜</button>
                 <button class="header-btn" id="newChatBtn" title="新建对话">＋</button>
                 <button class="header-btn" id="refreshBtn" title="刷新扩展">↻</button>
                 <button class="header-btn" id="clearChatBtn" title="清空对话">🗑</button>
@@ -31,23 +37,25 @@
                 <button class="header-btn" id="openOptionsBtn" title="打开设置">⚙</button>
             </div>
         </div>
-        <div class="conv-tools-row">
-            <label class="switch small-switch">
-                <input type="checkbox" id="toggleBall" checked>
-                <span class="slider round"></span>
-            </label>
-            <span class="toggle-label">显示悬浮球</span>
-        </div>
         <div id="chat-container" class="chat-container">
             <div id="messages" class="messages"></div>
         </div>
+        <div id="xhsCommands" class="xhs-commands" style="display:none">
+            <button class="xhs-cmd" data-cmd="optimize-notes">🔥 优化笔记</button>
+            <button class="xhs-cmd" data-cmd="enhance-content">📝 丰富内容</button>
+            <button class="xhs-cmd" data-cmd="improve-title">✨ 优化标题</button>
+            <button class="xhs-cmd" data-cmd="add-hashtags">#️⃣ 生成标签</button>
+            <button class="xhs-cmd" data-cmd="add-emoji">😊 添加表情</button>
+            <button class="xhs-cmd" data-cmd="seo-optimize">🔍 SEO优化</button>
+        </div>
         <div class="input-container">
-            <textarea id="userInput" placeholder="请输入您的问题..." rows="2"></textarea>
+            <div id="mentionDropdown" class="mention-dropdown" hidden></div>
+            <textarea id="userInput" placeholder="输入 @ 引用其他标签页，输入问题后回车发送..." rows="2"></textarea>
             <button id="askButton" class="send-button">
             </button>
         </div>
     </div>
-    <script src="popup.js"></script>
+    <script src="sidepanel.js"></script>
 </body>
 
 </html>

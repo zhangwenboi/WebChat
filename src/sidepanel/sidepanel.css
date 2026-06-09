@@ -1,0 +1,591 @@
+/**
+ * 侧边栏样式 — 流式布局，适配 chrome.sidePanel
+ *
+ * @format
+ */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  color: #333;
+  background: #f5f5f5;
+  overflow: hidden;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.chat-container {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.welcome-message {
+  color: #666;
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.message {
+  max-width: 88%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  line-height: 1.5;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.message.user-message {
+  align-self: flex-end;
+  background: #007aff;
+  color: #fff;
+}
+
+.message.assistant-message {
+  align-self: flex-start;
+  background: #fff;
+  border: 1px solid #eee;
+  color: #333;
+}
+
+/* 打字指示器 */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.typing-indicator span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #aaa;
+  animation: typingBounce 1.4s infinite ease-in-out both;
+}
+
+.typing-indicator span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+.typing-indicator span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes typingBounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.input-container {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  border-top: 1px solid #eee;
+  align-items: flex-end;
+}
+
+.input-container textarea {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  resize: none;
+  font: inherit;
+  background: #f9fafb;
+  color: #333;
+  outline: none;
+  max-height: 120px;
+}
+
+.input-container textarea:focus {
+  border-color: #007aff;
+  background: #fff;
+}
+
+.send-button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: #007aff;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.send-button::before {
+  content: '↑';
+  font-size: 18px;
+}
+
+.send-button:hover {
+  background: #0056b3;
+}
+
+.send-button:disabled {
+  background: #c7c7c7;
+  cursor: not-allowed;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* 头部 */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  background: #fff;
+  gap: 8px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.header-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #555;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.header-btn:hover {
+  background: #f0f0f0;
+  color: #007aff;
+  border-color: #e5e7eb;
+}
+
+.header-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 小红书重写开关 */
+.xhs-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  position: relative;
+  height: 20px;
+}
+
+.xhs-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.xhs-slider {
+  width: 34px;
+  height: 18px;
+  background: #ccc;
+  border-radius: 9px;
+  transition: background 0.3s;
+  flex-shrink: 0;
+}
+
+.xhs-slider::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  left: 2px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.xhs-toggle input:checked + .xhs-slider {
+  background: #ff2442;
+}
+
+.xhs-toggle input:checked + .xhs-slider::after {
+  transform: translateX(16px);
+}
+
+.xhs-label {
+  font-size: 14px;
+  user-select: none;
+}
+
+/* 小红书快捷指令按钮 */
+.xhs-commands {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.xhs-cmd {
+  padding: 4px 10px;
+  border: 1px solid #ff2442;
+  border-radius: 14px;
+  background: #fff;
+  color: #ff2442;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.xhs-cmd:hover {
+  background: #ff2442;
+  color: #fff;
+}
+
+/* @ 提及下拉菜单 */
+.mention-dropdown {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(100% - 6px);
+  max-height: 240px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.mention-dropdown[hidden] {
+  display: none;
+}
+
+.mention-dropdown .mention-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  color: #111827;
+}
+
+.mention-dropdown .mention-row.active,
+.mention-dropdown .mention-row:hover {
+  background: #f3f4f6;
+}
+
+.mention-dropdown .mention-favicon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  border-radius: 3px;
+}
+
+.mention-dropdown .mention-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mention-dropdown .mention-title {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mention-dropdown .mention-url {
+  font-size: 11px;
+  color: #9ca3af;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mention-dropdown .mention-empty {
+  text-align: center;
+  color: #9ca3af;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+/* 输入容器需要相对定位，mention-dropdown 才能 absolute 定位 */
+.input-container {
+  position: relative;
+}
+
+/* === 对话选择器 === */
+.conv-selector {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.conv-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 5px 10px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: all 0.15s;
+}
+.conv-selector-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+.conv-title-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100px;
+  font-weight: 500;
+}
+.conv-chevron {
+  font-size: 10px;
+  flex-shrink: 0;
+  color: #9ca3af;
+}
+
+/* 下拉面板 */
+.conv-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: -40px;
+  margin-top: 6px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+  z-index: 200;
+  max-height: 320px;
+  max-width: 800px;
+  text-overflow: ellipsis;
+  min-width: 300px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: spConvIn 0.15s ease-out;
+}
+@keyframes spConvIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.conv-dropdown[hidden] {
+  display: none;
+}
+
+.conv-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  flex-shrink: 0;
+}
+.conv-dropdown-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+.conv-dropdown-add {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 17px;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.conv-dropdown-add:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.conv-dropdown-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 8px;
+  max-height: 260px;
+}
+.conv-dropdown-empty {
+  text-align: center;
+  color: #9ca3af;
+  padding: 28px 14px;
+  font-size: 13px;
+}
+.conv-dropdown-empty::before {
+  content: '💬';
+  display: block;
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.conv-dropdown-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  cursor: pointer;
+  border-radius: 9px;
+  transition: background 0.12s;
+}
+.conv-dropdown-row:hover {
+  background: #f3f4f6;
+}
+.conv-dropdown-row.active {
+  background: #eff6ff;
+}
+.conv-dropdown-row.active .conv-row-title {
+  color: #1d4ed8;
+}
+
+.conv-row-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.conv-dropdown-row.active .conv-row-icon {
+  background: #dbeafe;
+}
+
+.conv-row-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.conv-row-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.conv-row-meta {
+  font-size: 11px;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.conv-row-meta-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #d1d5db;
+}
+
+.conv-row-delete {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: all 0.12s;
+}
+.conv-dropdown-row:hover .conv-row-delete {
+  opacity: 1;
+}
+.conv-row-delete:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}

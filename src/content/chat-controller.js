@@ -61,6 +61,121 @@ function buildMessageNode(content, isUser, markedInstance) {
     return div;
 }
 
+// ========== 对话管理 ==========
+
+// 格式化相对时间
+function formatRelativeTime(timestamp) {
+    if (!timestamp) return '';
+    const now = Date.now();
+    const diff = now - timestamp;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return '刚刚';
+    if (mins < 60) return `${mins} 分钟前`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} 小时前`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days} 天前`;
+    return new Date(timestamp).toLocaleDateString('zh-CN');
+}
+
+// 刷新对话选择器下拉列表
+async function refreshConversationList({ dialog, tabId, onSwitch }) {
+    const titleEl = dialog.querySelector('.conv-title-text');
+    const listEl = dialog.querySelector('#convDropdownList');
+    const dropdown = dialog.querySelector('#convDropdown');
+    const backdrop = dialog.querySelector('#convDropdownBackdrop');
+
+    try {
+        const res = await sendMessageWithRetry({ action: 'listConversations', tabId });
+        const conversations = res?.conversations || [];
+
+        // 找到当前活跃对话
+        const activeConv = conversations.find(c => c.isActive) || conversations[0];
+
+        if (activeConv) {
+            titleEl.textContent = activeConv.title || '新对话';
+        } else {
+            titleEl.textContent = '新对话';
+        }
+
+        // 渲染下拉列表
+        listEl.innerHTML = '';
+        if (conversations.length === 0) {
+            listEl.innerHTML = '<div class="conv-dropdown-empty">还没有对话，发送一条消息开始吧</div>';
+        } else {
+            conversations.forEach(conv => {
+                const isActive = conv.isActive;
+                const row = document.createElement('div');
+                row.className = 'conv-dropdown-row' + (isActive ? ' active' : '');
+                row.dataset.convId = conv.id;
+                const iconEmoji = isActive ? '💬' : '📝';
+                row.innerHTML = `
+                    <div class="conv-row-icon">${iconEmoji}</div>
+                    <div class="conv-row-content">
+                        <span class="conv-row-title">${escapeHtml(conv.title || '新对话')}</span>
+                        <span class="conv-row-meta">
+                            <span>${conv.messageCount || 0} 条消息</span>
+                            <span class="conv-row-meta-dot"></span>
+                            <span>${formatRelativeTime(conv.updatedAt)}</span>
+                        </span>
+                    </div>
+                    <button class="conv-row-delete" data-conv-id="${conv.id}" title="删除对话">
+                        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+                    </button>
+                `;
+                row.addEventListener('click', (e) => {
+                    if (e.target.closest('.conv-row-delete')) return;
+                    closeDropdown();
+                    if (onSwitch) onSwitch(conv.id);
+                });
+                listEl.appendChild(row);
+            });
+
+            // 删除按钮事件
+            listEl.querySelectorAll('.conv-row-delete').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const convId = btn.dataset.convId;
+                    if (!confirm('确定删除此对话？该操作不可恢复。')) return;
+                    try {
+                        await sendMessageWithRetry({ action: 'deleteConversation', tabId, convId });
+                    } catch (err) {
+                        showNotification('删除失败: ' + err.message, 'error');
+                    }
+                    await refreshConversationList({ dialog, tabId, onSwitch });
+                    const stillExists = listEl.querySelector(`[data-conv-id="${convId}"]`);
+                    if (!stillExists && onSwitch) {
+                        const firstRow = listEl.querySelector('.conv-dropdown-row');
+                        if (firstRow) {
+                            onSwitch(firstRow.dataset.convId);
+                        } else {
+                            onSwitch(null);
+                        }
+                    }
+                });
+            });
+        }
+
+        return conversations;
+    } catch (err) {
+        console.error('刷新对话列表失败:', err);
+        return [];
+    }
+}
+
+function closeDropdown() {
+    const dropdown = document.querySelector('#ai-assistant-dialog #convDropdown');
+    const backdrop = document.querySelector('#ai-assistant-dialog #convDropdownBackdrop');
+    if (dropdown) dropdown.hidden = true;
+    if (backdrop) backdrop.hidden = true;
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 // 拉取历史并渲染；失败时退回欢迎语
 async function loadHistory({ messagesContainer, markedInstance, tabId }) {
     try {
@@ -151,17 +266,18 @@ function bindAnswerStream({
     });
 }
 
-async function exportHistory(tabId) {
+async function exportHistory(tabId, dialog) {
     try {
         const response = await sendMessageWithRetry({ action: 'getHistory', tabId });
         const history = response?.history || [];
         if (!history.length) {
-            showNotification('No chat history to export');
+            showNotification('暂无对话可导出');
             return;
         }
-        const lines = [`# WebChat 对话导出`, `> ${document.title}`, `> ${location.href}`, ''];
+        const convTitle = dialog?.querySelector('.conv-title-text')?.textContent || '对话';
+        const lines = [`# WebChat 对话导出 — ${convTitle}`, `> ${document.title}`, `> ${location.href}`, ''];
         history.forEach(msg => {
-            const who = msg.isUser ? 'User' : 'Assistant';
+            const who = msg.isUser ? '用户' : '助手';
             const content = msg.markdownContent || msg.content || '';
             lines.push(`## ${who}`, '', content, '');
         });
@@ -173,7 +289,7 @@ async function exportHistory(tabId) {
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (e) {
-        showNotification('Export failed: ' + e.message);
+        showNotification('导出失败: ' + e.message);
     }
 }
 
@@ -245,6 +361,89 @@ export async function initializeDialog(dialog) {
 
         // 聊天会话状态：tabId 决定历史记录归属，currentPort 是当前流式端口
         let tabId;
+        let currentConvId = null;
+        let generatingConvId = null; // 正在生成中的对话 ID（切换对话时不中断生成）
+
+        // ===== 对话管理 UI =====
+        const convSelectorBtn = dialog.querySelector('#convSelectorBtn');
+        const convDropdown = dialog.querySelector('#convDropdown');
+        const convTitleText = dialog.querySelector('.conv-title-text');
+
+        // 切换对话（生成中切换时不中断 AI，只切换视图）
+        async function switchToConversation(convId) {
+            try {
+                if (convId) {
+                    await sendMessageWithRetry({ action: 'switchConversation', tabId, convId });
+                } else {
+                    // 新建对话
+                    const res = await sendMessageWithRetry({ action: 'createConversation', tabId });
+                    convId = res?.conversation?.id;
+                }
+                currentConvId = convId;
+
+                // 清空当前界面并重新加载（不中断正在生成的对话）
+                messagesContainer.innerHTML = '';
+                totalTokens = 0;
+                tokensCounter.textContent = 'Tokens: 0';
+                chrome.storage.sync.set({ totalTokens: 0 });
+                clearMarked();
+                await loadHistory({ messagesContainer, markedInstance, tabId });
+                await refreshConversationList({ dialog, tabId, onSwitch: switchToConversation });
+                // 如果 AI 正在为其他对话生成，保持 UI 可用
+                if (generatingConvId && generatingConvId !== currentConvId) {
+                    isGenerating = false;
+                    userInput.disabled = false;
+                    askButton.classList.remove('generating');
+                }
+                userInput.focus();
+            } catch (err) {
+                showNotification('切换对话失败: ' + err.message, 'error');
+            }
+        }
+
+        // 对话选择器按钮：切换下拉
+        const convBackdrop = dialog.querySelector('#convDropdownBackdrop');
+        function openDropdown() {
+            convDropdown.hidden = false;
+            convBackdrop.hidden = false;
+            refreshConversationList({ dialog, tabId, onSwitch: switchToConversation });
+        }
+
+        convSelectorBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (convDropdown.hidden) {
+                openDropdown();
+            } else {
+                convDropdown.hidden = true;
+                convBackdrop.hidden = true;
+            }
+        });
+
+        // 点击遮罩关闭下拉
+        convBackdrop?.addEventListener('click', () => {
+            convDropdown.hidden = true;
+            convBackdrop.hidden = true;
+        });
+
+        // 下拉头部 + 按钮
+        dialog.querySelector('#convDropdownAdd')?.addEventListener('click', () => {
+            convDropdown.hidden = true;
+            convBackdrop.hidden = true;
+            switchToConversation(null);
+        });
+
+        // 新建对话按钮
+        dialog.querySelector('#newChatBtn')?.addEventListener('click', () => {
+            convDropdown.hidden = true;
+            convBackdrop.hidden = true;
+            switchToConversation(null);
+        });
+
+        // 刷新按钮
+        dialog.querySelector('#refreshBtn')?.addEventListener('click', () => {
+            if (!confirm('刷新将重新加载扩展，当前对话已自动保存。确定继续？')) return;
+            sendMessageWithRetry({ action: 'reloadExtension' }).catch(() => {});
+        });
         try {
             const response = await sendMessageWithRetry({ action: 'getCurrentTab' });
             if (!response) throw new Error('无法获取标签页 ID');
@@ -307,6 +506,7 @@ export async function initializeDialog(dialog) {
             if (!question) return;
 
             isGenerating = true;
+            generatingConvId = currentConvId; // 记录本次生成归属的对话
             scroll.setGenerating(true);
             userInput.disabled = true;
             askButton.disabled = false;
@@ -342,24 +542,47 @@ export async function initializeDialog(dialog) {
 
                 if (currentPort) currentPort.disconnect();
                 currentPort = chrome.runtime.connect({ name: 'answerStream' });
+                const thisPort = currentPort; // 捕获当前 port，防止后续生成覆盖
 
+                const genConvId = generatingConvId; // 捕获本次生成归属
                 bindAnswerStream({
-                    port: currentPort,
+                    port: thisPort,
                     messageDiv,
                     typingIndicator,
                     markedInstance,
                     onTokens: (n) => setTokens(n),
                     onDone: () => {
-                        endGenerating();
-                        currentPort?.disconnect();
-                        currentPort = null;
+                        generatingConvId = null;
+                        // 只有当用户仍在查看该对话时才更新 UI
+                        if (currentConvId === genConvId) {
+                            endGenerating();
+                        }
+                        thisPort?.disconnect();
+                        if (currentPort === thisPort) currentPort = null;
                         scroll.resumeFollow();
                         chrome.storage.sync.set({ totalTokens });
+                        refreshConversationList({ dialog, tabId, onSwitch: switchToConversation });
                     },
                     onError: (err) => {
-                        appendMessage('Error: ' + err, false);
+                        generatingConvId = null;
+                        if (currentConvId === genConvId) {
+                            appendMessage('Error: ' + err, false);
+                            endGenerating();
+                        }
+                        thisPort?.disconnect();
+                        if (currentPort === thisPort) currentPort = null;
+                    }
+                });
+
+                // 如果端口意外断开（如 Service Worker 终止），自动恢复 UI
+                thisPort.onDisconnect.addListener(() => {
+                    generatingConvId = null;
+                    if (isGenerating) {
                         endGenerating();
-                        currentPort?.disconnect();
+                        const pending = document.querySelector('.message[data-pending="true"]');
+                        if (pending) pending.remove();
+                        const typing = document.querySelector('.typing-indicator');
+                        if (typing) typing.remove();
                         currentPort = null;
                     }
                 });
@@ -368,6 +591,7 @@ export async function initializeDialog(dialog) {
                     currentPort.postMessage({
                         action: 'generateAnswer',
                         tabId,
+                        convId: genConvId,
                         pageContent,
                         question: cleanedQuestion,
                         images,
@@ -416,9 +640,11 @@ export async function initializeDialog(dialog) {
             clearMarked();
         });
 
-        dialog.querySelector('#exportChatBtn')?.addEventListener('click', () => exportHistory(tabId));
+        dialog.querySelector('#exportChatBtn')?.addEventListener('click', () => exportHistory(tabId, dialog));
 
         await loadHistory({ messagesContainer, markedInstance, tabId });
+        // 初始化对话列表
+        await refreshConversationList({ dialog, tabId, onSwitch: switchToConversation });
     } catch (error) {
         console.error('初始化对话框失败:', error);
         const div = document.createElement('div');

@@ -10,6 +10,11 @@ export async function checkAndSetBallVisibility() {
             showNotification('扩展已更新，请刷新页面以继续使用');
             return;
         }
+
+        // 仅在用户开启悬浮球设置时才创建
+        const { showFloatingBall } = await chrome.storage.sync.get({ showFloatingBall: true });
+        if (!showFloatingBall) return;
+
         const existingBall = document.getElementById('ai-assistant-ball');
         const existingDialog = document.getElementById('ai-assistant-dialog');
 
@@ -25,3 +30,6 @@ export async function checkAndSetBallVisibility() {
         }
     }
 }
+
+// 页面加载时自动检查（仅在设置开启时才创建悬浮球）
+checkAndSetBallVisibility();
